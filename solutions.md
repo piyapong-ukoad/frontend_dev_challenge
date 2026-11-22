@@ -8,8 +8,8 @@
 
 | Item | Status | Commit(s) |
 | --- | --- | --- |
-| RES-101 Search shows wrong query results | | |
-| RES-102 Crash after leaving My orders | | |
+| RES-101 Search shows wrong query results | partial | |
+| RES-102 Crash after leaving My orders | done | 5fc061d |
 | RES-103 Requests pile up | | |
 | RES-104 Duplicate deals in home feed | | |
 | RES-105 Janky feed / memory growth | | |
@@ -25,35 +25,32 @@
 
 ## Part A: Bug tickets
 
-### RES-10X · <ticket title>
+### RES-101 · Search shows wrong query results
 
 **How I reproduced it**
 
-- Steps, console logs, or screenshots.
+- I cann't reproduced this issue yet.
+
+### RES-101 · Crash after leaving My orders
+
+**How I reproduced it**
+
+- Opened My orders with an order that has an upcoming pickup, then
+  navigated back. Then the console showed `setState() called after dispose()`.
 
 **Root cause**
 
-- What was actually wrong (the mechanism, not just what I changed).
-- File and line references, e.g. `lib/feature/search/search_controller.dart`.
+- `PickupCountdown` starts a `Timer.periodic` in `initState()`,
+  but the timer was never stored or cancelled. After the
+  widget is disposed, the timer keeps firing and calls `setState()` on
+  a State that no longer exists.
+- lib/feature/order/widget/pickup_countdown.dart
 
 **Fix**
 
-- What I changed and why this addresses the cause, not just the symptom.
-
-**Alternative considered and rejected**
-
-- Alternative: ...
-- Why I rejected it: ...
-
-**Edge cases**
-
-- Handled: ...
-- Deliberately not handled (and why): ...
-
-**Evidence** *(required for RES-105)*
-
-- Before: DevTools screenshot or numbers.
-- After: DevTools screenshot or numbers.
+- Store the timer in a field (`Timer? _timer`) and call
+  `_timer?.cancel()` in `dispose()`, so the timer's lifetime matches
+  the widget's lifetime.
 
 ---
 
