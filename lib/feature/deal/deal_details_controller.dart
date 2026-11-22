@@ -19,27 +19,43 @@ class DealDetailsController extends GetxController {
 
   late final DealModel deal;
 
-  final _quantityLeft = RxnInt();
-  int? get quantityLeft => _quantityLeft.value;
+  final _serverQuantityLeft = 0.obs;
+  final _inCartCount = 0.obs;
+
+  int get quantityLeft =>
+      (_serverQuantityLeft.value - _inCartCount.value).clamp(0, 9999);
+
+  Worker? _cartWorker;
 
   @override
   void onInit() {
     super.onInit();
     deal = Get.arguments as DealModel;
-    _quantityLeft.value = deal.quantityLeft;
+    _serverQuantityLeft.value = deal.quantityLeft;
+    _inCartCount.value = cartService.quantityInCart(deal.id);
+
     analytics.logEvent('deal_details_view', {
       'deal_id': deal.id,
       'source': Get.parameters['source'] ?? 'unknown',
     });
-    // Whenever the cart changes, re-check this deal's remaining stock so the
-    // details screen never shows stale availability.
-    ever(cartService.itemCount, (_) => _recheckAvailability());
+
+    _cartWorker = ever(cartService.itemCount, (_) => _onCartChanged());
   }
 
-  Future<void> _recheckAvailability() async {
+  Future<void> _onCartChanged() async {
+    if (isClosed) return;
+    _inCartCount.value = cartService.quantityInCart(deal.id);
+
     LogService.log('re-checking availability for deal ${deal.id}');
     final fresh = await dealRepo.fetchById(deal.id);
-    _quantityLeft.value = fresh.quantityLeft;
+    if (isClosed) return;
+    _serverQuantityLeft.value = fresh.quantityLeft;
+  }
+
+  @override
+  void onClose() {
+    _cartWorker?.dispose();
+    super.onClose();
   }
 
   void addToCart() {

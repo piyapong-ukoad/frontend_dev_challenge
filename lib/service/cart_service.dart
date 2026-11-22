@@ -54,4 +54,10 @@ class CartService extends GetxService {
   void _recount() {
     itemCount.value = items.fold(0, (sum, i) => sum + i.quantity);
   }
+
+  int quantityInCart(int dealId) {
+    return items
+        .where((item) => item.deal.id == dealId)
+        .fold(0, (sum, item) => sum + item.quantity);
+  }
 }
