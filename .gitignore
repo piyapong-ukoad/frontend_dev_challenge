@@ -49,3 +49,5 @@ internal/
 
 # fvm
 .fvm/
+# Widget Preview related
+.widget_preview/
