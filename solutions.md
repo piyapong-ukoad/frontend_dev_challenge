@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | RES-101 Search shows wrong query results | partial | |
 | RES-102 Crash after leaving My orders | done | 5fc061d |
-| RES-103 Requests pile up | | |
+| RES-103 Requests pile up | done | 3557302 |
 | RES-104 Duplicate deals in home feed | | |
 | RES-105 Janky feed / memory growth | | |
 | RES-106 Wrong pickup times | | |
@@ -27,18 +27,18 @@
 
 ### RES-101 · Search shows wrong query results
 
-**How I reproduced it**
+#### How I reproduced it
 
 - I cann't reproduced this issue yet.
 
-### RES-101 · Crash after leaving My orders
+### RES-102 · Crash after leaving My orders
 
-**How I reproduced it**
+#### How I reproduced it
 
 - Opened My orders with an order that has an upcoming pickup, then
   navigated back. Then the console showed `setState() called after dispose()`.
 
-**Root cause**
+#### Root cause
 
 - `PickupCountdown` starts a `Timer.periodic` in `initState()`,
   but the timer was never stored or cancelled. After the
@@ -46,11 +46,33 @@
   a State that no longer exists.
 - lib/feature/order/widget/pickup_countdown.dart
 
-**Fix**
+#### Fix
 
 - Store the timer in a field (`Timer? _timer`) and call
   `_timer?.cancel()` in `dispose()`, so the timer's lifetime matches
   the widget's lifetime.
+
+### RES-103 · Requests pile up
+
+#### How I reproduced it**
+
+- Opened several deal pages, went back each time, then tapped "Add to bag".
+
+#### Root cause
+
+- `DealDetailsController` [register a worker on `cartService.itemCount`
+  in `onInit()` — lib/feature/deal/deal_details_controller.dart:36], but the worker is never disposed.
+  `CartService` lives for the whole app, so the workers of closed
+  screens keep listening. Each cart change runs every old worker, and
+  each one calls `GET /deals/:id` to get the deal quantity.
+- /lib/feature/deal/deal_details_controller.dart
+
+#### Fix
+
+- Keep the `Worker` in a field and call `dispose()` in `onClose()`, so
+  the listener's lifetime matches the controller's.
+- Added `[quantityInCart]` to `CartService` to calculate the deal
+  quantity locally.
 
 ---
 
