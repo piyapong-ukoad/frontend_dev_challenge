@@ -15,7 +15,7 @@
 | RES-105 Janky feed / memory growth | | |
 | RES-106 Wrong pickup times | | |
 | RES-107 Deep link crash | | |
-| F-1 Flash-sale countdowns | | |
+| F-1 Flash-sale countdowns | partial | 8efe327 |
 | F-2 Impression tracking | | |
 | F-3 Stock reservations | | |
 
@@ -78,7 +78,7 @@
 
 ## Part B: Features
 
-### F-X · <feature title>
+### F-1 · Flash-sale countdowns
 
 **Approach**
 
@@ -114,12 +114,26 @@
 
 ### Tools used
 
-- <Tool>: <what I used it for>
+- **Claude** and **Gemini** (chat only, no coding agents such as
+  Claude Code, Cursor or Copilot). I used both in the same way:
+  - to understand the brief, the git workflow and Conventional Commits;
+  - to explain unfamiliar behaviour (e.g. GetX workers and lifecycle);
+  - to generate drafts (e.g. [code suggestions, commit messages,
+    solutions.md text]) and to check my own diagnosis and fixes;
+  - to correct the English in my write-ups.
+- I reviewed every suggestion against the code and the running app
+  before using it, and I can explain each line I submitted.
 
 ### How I used AI
 
-- e.g. explaining unfamiliar GetX behaviour, reviewing my own hypotheses, boilerplate.
-- How I verified AI output (reproducing in the app, console logs, DevTools).
+- **Understanding:** I asked Claude and Gemini to explain the
+  assessment brief, the git workflow, Conventional Commits, and
+  unfamiliar GetX behaviour such as workers and controller lifecycle.
+- **Checking:** I wrote my own diagnosis first, then asked AI to check
+  it, for example [RES-102: the timer not cancelled in dispose(),
+  RES-103: the worker not disposed in onClose()].
+- **Generating:** I used AI to generate code suggestions, commit
+  message, solutions.md.
 
 ### Example 1: AI suggestion was wrong or misleading
 
