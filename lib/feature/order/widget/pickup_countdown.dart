@@ -32,7 +32,7 @@ class _PickupCountdownState extends State<PickupCountdown> {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = widget.pickupStart.difference(DateTime.now());
+    final remaining = widget.pickupStart.difference(DateTime.now().toUtc());
     final String text;
     if (remaining.isNegative) {
       text = 'Pickup window is open';
