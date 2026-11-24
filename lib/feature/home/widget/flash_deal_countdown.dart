@@ -1,105 +1,69 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class FlashDealCountdown extends StatefulWidget {
   const FlashDealCountdown({
     super.key,
     required this.dealEnd,
-    required this.onExpired,
+    required this.nowListenable,
+    this.onExpired,
   });
 
   final DateTime dealEnd;
-  final VoidCallback onExpired;
+  final ValueListenable<DateTime> nowListenable;
+  final VoidCallback? onExpired;
 
   @override
   State<FlashDealCountdown> createState() => _FlashDealCountdownState();
 }
 
 class _FlashDealCountdownState extends State<FlashDealCountdown> {
-  Timer? _timer;
-  String _text = '';
-  bool _notifiedExpired = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateCountdown(afterFrame: true);
-    if (!_notifiedExpired) {
-      _startTimer();
-    }
-  }
+  bool _expiredNotified = false;
 
   @override
   void didUpdateWidget(covariant FlashDealCountdown oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.dealEnd != widget.dealEnd) {
-      _timer?.cancel();
-      _notifiedExpired = false;
-      _updateCountdown(afterFrame: true);
-      if (!_notifiedExpired) {
-        _startTimer();
-      }
+      _expiredNotified = false;
     }
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateCountdown(afterFrame: false);
-    });
-  }
-
-  void _updateCountdown({required bool afterFrame}) {
-    final remaining = widget.dealEnd.difference(DateTime.now().toUtc());
-    if (remaining.isNegative) {
-      _timer?.cancel();
-      if (mounted && _text != 'Expired') {
-        setState(() {
-          _text = 'Expired';
-        });
-      }
-      if (!_notifiedExpired) {
-        _notifiedExpired = true;
-        if (afterFrame) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) widget.onExpired();
-          });
-        } else {
-          widget.onExpired();
-        }
-      }
-      return;
+  String _formatDuration(Duration remaining) {
+    if (remaining <= Duration.zero) {
+      return 'Expired';
     }
-
-    final h = remaining.inHours;
-    final m = remaining.inMinutes % 60;
-    final s = remaining.inSeconds % 60;
-    final formatted = h > 0
-        ? '${h}h ${m}m'
-        : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-
-    if (mounted && formatted != _text) {
-      setState(() {
-        _text = formatted;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+    final hours = remaining.inHours;
+    final minutes =
+        remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      _text,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: _notifiedExpired ? Colors.grey.shade700 : Colors.red.shade700,
-      ),
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: widget.nowListenable,
+      builder: (context, now, _) {
+        final remaining = widget.dealEnd.difference(now);
+        final expired = remaining <= Duration.zero;
+
+        if (expired && !_expiredNotified) {
+          _expiredNotified = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onExpired?.call();
+          });
+        }
+
+        return Text(
+          _formatDuration(remaining),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: expired ? Colors.grey.shade600 : Colors.red.shade700,
+          ),
+        );
+      },
     );
   }
 }
