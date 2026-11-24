@@ -3,8 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class FlashDealCountdown extends StatefulWidget {
-  const FlashDealCountdown({super.key, required this.dealEnd});
+  const FlashDealCountdown({
+    super.key,
+    required this.dealEnd,
+    required this.onExpired,
+  });
+
   final DateTime dealEnd;
+  final VoidCallback onExpired;
 
   @override
   State<FlashDealCountdown> createState() => _FlashDealCountdownState();
@@ -13,12 +19,15 @@ class FlashDealCountdown extends StatefulWidget {
 class _FlashDealCountdownState extends State<FlashDealCountdown> {
   Timer? _timer;
   String _text = '';
+  bool _notifiedExpired = false;
 
   @override
   void initState() {
-    _updateCountdown();
-    _startTimer();
     super.initState();
+    _updateCountdown(afterFrame: true);
+    if (!_notifiedExpired) {
+      _startTimer();
+    }
   }
 
   @override
@@ -26,25 +35,38 @@ class _FlashDealCountdownState extends State<FlashDealCountdown> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.dealEnd != widget.dealEnd) {
       _timer?.cancel();
-      _updateCountdown();
-      _startTimer();
+      _notifiedExpired = false;
+      _updateCountdown(afterFrame: true);
+      if (!_notifiedExpired) {
+        _startTimer();
+      }
     }
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateCountdown();
+      _updateCountdown(afterFrame: false);
     });
   }
 
-  void _updateCountdown() {
+  void _updateCountdown({required bool afterFrame}) {
     final remaining = widget.dealEnd.difference(DateTime.now().toUtc());
     if (remaining.isNegative) {
       _timer?.cancel();
-      if (mounted) {
+      if (mounted && _text != 'Expired') {
         setState(() {
           _text = 'Expired';
         });
+      }
+      if (!_notifiedExpired) {
+        _notifiedExpired = true;
+        if (afterFrame) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onExpired();
+          });
+        } else {
+          widget.onExpired();
+        }
       }
       return;
     }
@@ -56,7 +78,7 @@ class _FlashDealCountdownState extends State<FlashDealCountdown> {
         ? '${h}h ${m}m'
         : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 
-    if (mounted) {
+    if (mounted && formatted != _text) {
       setState(() {
         _text = formatted;
       });
@@ -76,7 +98,7 @@ class _FlashDealCountdownState extends State<FlashDealCountdown> {
       style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        color: Colors.red.shade700,
+        color: _notifiedExpired ? Colors.grey.shade700 : Colors.red.shade700,
       ),
     );
   }
