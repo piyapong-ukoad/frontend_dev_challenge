@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:rescu/feature/shared_widget/impression_tracker.dart';
 
 import '../../app_config.dart';
 import '../../routes/routes.dart';
@@ -106,7 +107,12 @@ class HomeScreen extends GetView<HomeController> {
                       itemCount: controller.visibleDeals.length,
                       itemBuilder: (context, index) {
                         final deal = controller.visibleDeals[index];
-                        return DealCard(deal: deal);
+                        return ImpressionTracker(
+                          dealId: deal.id,
+                          source: 'home_feed',
+                          position: index,
+                          child: DealCard(deal: deal),
+                        );
                       },
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),

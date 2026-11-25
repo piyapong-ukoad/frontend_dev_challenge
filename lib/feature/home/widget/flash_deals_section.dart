@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rescu/feature/home/widget/flash_sale_card.dart';
+import 'package:rescu/feature/shared_widget/impression_tracker.dart';
 import 'package:rescu/model/deal_model.dart';
 
 /// Horizontal flash-sale rail.
@@ -22,8 +23,13 @@ class FlashDealsSection extends StatelessWidget {
             children: [
               Icon(Icons.bolt, color: Colors.red, size: 20),
               SizedBox(width: 4),
-              Text('Flash sales',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              Text(
+                'Flash sales',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
@@ -35,7 +41,12 @@ class FlashDealsSection extends StatelessWidget {
             itemCount: deals.length,
             itemBuilder: (context, index) {
               final deal = deals[index];
-              return FlashSaleCard(deal: deal);
+              return ImpressionTracker(
+                dealId: deal.id,
+                source: 'flash_rail',
+                position: index,
+                child: FlashSaleCard(deal: deal),
+              );
             },
           ),
         ),
