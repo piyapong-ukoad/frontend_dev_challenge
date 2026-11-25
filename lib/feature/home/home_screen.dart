@@ -73,30 +73,43 @@ class HomeScreen extends GetView<HomeController> {
                 enablePullUp: true,
                 onRefresh: controller.refreshDeals,
                 onLoading: controller.loadMore,
-                child: ListView(
+                child: CustomScrollView(
                   controller: controller.scrollController,
-                  children: [
+                  slivers: [
                     if (controller.flashDeals.isNotEmpty)
-                      FlashDealsSection(deals: controller.flashDeals),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                      child: Row(
-                        children: [
-                          const Text('Nearby deals',
+                      SliverToBoxAdapter(
+                        child: FlashDealsSection(deals: controller.flashDeals),
+                      ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Nearby deals',
                               style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.bold)),
-                          const Spacer(),
-                          FilterChip(
-                            label: const Text('Pickup today'),
-                            selected: controller.todayOnly.value,
-                            onSelected: (v) => controller.todayOnly.value = v,
-                          ),
-                        ],
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            FilterChip(
+                              label: const Text('Pickup today'),
+                              selected: controller.todayOnly.value,
+                              onSelected: (v) => controller.todayOnly.value = v,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    ...controller.visibleDeals
-                        .map((deal) => DealCard(deal: deal)),
-                    const SizedBox(height: 24),
+                    SliverList.builder(
+                      itemCount: controller.visibleDeals.length,
+                      itemBuilder: (context, index) {
+                        final deal = controller.visibleDeals[index];
+                        return DealCard(deal: deal);
+                      },
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
                 ),
               ),
@@ -129,9 +142,8 @@ class HomeScreen extends GetView<HomeController> {
               final uri = Uri.tryParse(textController.text.trim());
               Get.back();
               if (uri == null) return;
-              final route = uri.hasQuery
-                  ? '${uri.path}?${uri.query}'
-                  : uri.path;
+              final route =
+                  uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
               Get.toNamed(route);
             },
             child: const Text('Open'),
